@@ -1,13 +1,21 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/cresenity/gate/middleware"
+	"github.com/gin-gonic/gin"
+)
 
 func InitializeRouter() (router *gin.Engine) {
 	router = gin.Default()
 	router.GET("/")
-	router.GET("info")
 
 	apiRoute := router.Group("api")
+	apiRoute.Use(
+		middleware.Auth,
+		middleware.CORS,
+	)
+
+	apiRoute.GET("info")
 	configRoute := apiRoute.Group("config")
 	{
 		configRoute.GET("")
