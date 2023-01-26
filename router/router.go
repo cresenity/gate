@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/cresenity/gate/handler"
 	"github.com/cresenity/gate/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -15,19 +16,19 @@ func InitializeRouter() (router *gin.Engine) {
 		middleware.CORS,
 	)
 
-	apiRoute.GET("info")
+	apiRoute.GET("info", handler.GetInfo)
 	configRoute := apiRoute.Group("config")
 	{
-		configRoute.GET("")
-		configRoute.POST("ip/:ipAddress")
+		configRoute.GET("", handler.GetConfiguration)
+		configRoute.POST("ip/:ipAddress", handler.SetDefaultIpAddress)
 	}
 
-	sslRoute := apiRoute.Group("ssl")
+	sslRoute := apiRoute.Group("domain")
 	{
-		sslRoute.POST("install/:domain/:ipAddress")
-		sslRoute.PUT("update/:domain/:ipAddress")
-		sslRoute.GET("status/:domain")
-		sslRoute.GET("status/all")
+		sslRoute.POST("ssl/:domain/:ipAddress", handler.InstallSsl)
+		sslRoute.PUT("update/:domain/:ipAddress", handler.UpdateDomain)
+		sslRoute.GET("status/:domain", handler.GetDomainStatus)
+		sslRoute.GET("status/all", handler.GetAllDomainStatus)
 	}
 
 	return
