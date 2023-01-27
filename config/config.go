@@ -27,6 +27,8 @@ func LoadAppConfig() {
 	viper.AutomaticEnv()
 	_ = viper.ReadInConfig()
 
+	/*test*/
+
 	AppConfig.Name = viper.GetString("APP_NAME")
 	AppConfig.Version = viper.GetString("APP_VERSION")
 	AppConfig.Port = viper.GetInt("PORT")
