@@ -8,6 +8,11 @@ import (
 )
 
 func InstallSsl(c *gin.Context) {
+	//TODO : check domain target ipAddress
+	//TODO : add domain to nginx configuration
+	//TODO : run `certbot --nginx -d DOMAIN`
+	//TODO : do checking
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
