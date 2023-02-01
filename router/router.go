@@ -25,8 +25,9 @@ func InitializeRouter() (router *gin.Engine) {
 
 	sslRoute := apiRoute.Group("domain")
 	{
-		sslRoute.POST("ssl/:domain/:ipAddress", handler.InstallSsl)
-		sslRoute.PUT("update/:domain/:ipAddress", handler.UpdateDomain)
+		sslRoute.POST(":domain/:ipAddress", handler.InstallSsl)
+		sslRoute.PUT(":domain/:ipAddress", handler.UpdateDomain)
+		sslRoute.DELETE(":domain", handler.GetDomainStatus)
 		sslRoute.GET("status/:domain", handler.GetDomainStatus)
 		sslRoute.GET("status/all", handler.GetAllDomainStatus)
 	}
