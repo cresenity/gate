@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/cresenity/gate/config"
 	dtf "github.com/cresenity/gate/datatransfer"
@@ -26,11 +27,14 @@ func GetInfo(c *gin.Context) {
 }
 
 func GetConfiguration(c *gin.Context) {
+
+	createDataConfiguration()
+	//create dir data
+	var data dtf.Configuration
 	content, err := ioutil.ReadFile("data/config.json")
 	if err != nil {
 		log.Fatal("Error when opening file: ", err)
 	}
-	var data dtf.Configuration
 	err = json.Unmarshal(content, &data)
 	if err != nil {
 		log.Fatal("Error during Unmarshal(): ", err)
@@ -45,10 +49,10 @@ func GetConfiguration(c *gin.Context) {
 }
 
 func SetDefaultIpAddress(c *gin.Context) {
+	createDataConfiguration()
 	ip := c.Param("ipAddress")
 	data := dtf.Configuration{
-		DefaultIp: "127.0.0.1",
-		Ip:        ip,
+		DefaultIp: ip,
 	}
 	file, _ := json.MarshalIndent(data, "", " ")
 	_ = ioutil.WriteFile("data/config.json", file, 0644)
@@ -59,4 +63,29 @@ func SetDefaultIpAddress(c *gin.Context) {
 			Data:   data,
 		},
 	)
+}
+func createDataConfiguration() bool {
+	dir := "data"
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.Mkdir(dir, 0755)
+		if err != nil {
+			log.Fatal("Error create directory data: ", err)
+		}
+	}
+	//create file config.json
+	filename := "data/config.json"
+
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		file, err := os.Create(filename)
+		if err != nil {
+			log.Fatalf("Failed to create file: %s", err)
+		}
+		data := dtf.Configuration{}
+		file2, _ := json.MarshalIndent(data, "", " ")
+		_ = ioutil.WriteFile("data/config.json", file2, 0644)
+		defer file.Close()
+	}
+	return true
+
 }
