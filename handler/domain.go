@@ -1,23 +1,28 @@
 package handler
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os/exec"
+	"regexp"
 
 	// "net"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
+	"github.com/cresenity/gate/config"
 	dtf "github.com/cresenity/gate/datatransfer"
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	filePath string = "/etc/nginx/conf.d/"
+	filePath            string = "/etc/nginx/conf.d/"
+	filePathCertificate        = "/etc/letsencrypt/live/"
 	// filePath     string = "/usr/local/etc/nginx/servers/"
 	fileTemplate string = `server {
 		listen       80;
@@ -43,28 +48,25 @@ func InstallSsl(c *gin.Context) {
 	nameDomain := c.Param("domain")
 	ip := c.Param("ipAddress")
 	if len(ip) == 0 {
-		ip = "127.0.0.1"
+		ip = getIpDefault()
 	}
 
-	// //TODO : check domain target ipAddress
+	var isSSL bool
+	var isConnectIp bool
+
+	//chcek domain ada atau tidak
 	if errCode == 0 {
-		createDataConfiguration()
-		//create dir data
-		var data dtf.Configuration
-		content, err := ioutil.ReadFile("data/config.json")
-		if err != nil {
-			log.Fatal("Error when opening file: ", err)
+		validateDomain := validateDomain(nameDomain)
+		if !validateDomain {
+			errCode++
+			errMessage = "Domain not valid"
 		}
-		err = json.Unmarshal(content, &data)
-		if err != nil {
-			log.Fatal("Error during Unmarshal(): ", err)
-		}
+	}
 
-		var isConnectIp bool
-
+	if errCode == 0 {
 		targetDomain := nameDomain
-		desiredIP := data.DefaultIp
-		log.Println(" IP DEFAULT :", desiredIP)
+		desiredIP := config.AppConfig.IP
+		log.Println(" IP Config :", desiredIP)
 
 		if len(desiredIP) > 0 {
 			ips, err := net.LookupIP(targetDomain)
@@ -89,7 +91,6 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		//TODO : add domain to nginx configuration
 		_, err := CreateDomain(nameDomain, ip)
 		if err != nil {
 			log.Println("Error creating file:", err)
@@ -99,7 +100,6 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		//TODO : run `certbot --nginx -d DOMAIN`
 		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain)
 		_, err := cmd.CombinedOutput()
 		if err != nil {
@@ -109,7 +109,9 @@ func InstallSsl(c *gin.Context) {
 		}
 	}
 
-	//TODO : do checking
+	if errCode == 0 {
+		isSSL = checkCertificate(nameDomain)
+	}
 
 	c.JSON(
 		http.StatusOK,
@@ -117,22 +119,78 @@ func InstallSsl(c *gin.Context) {
 			Status:  true,
 			Code:    errCode,
 			Message: errMessage,
+			Data: map[string]interface{}{
+				"isConnectIp": isConnectIp,
+				"statusSSL":   isSSL,
+			},
 		},
 	)
 }
 
 func UpdateDomain(c *gin.Context) {
+
+	domain := c.Param("domain")
+	ip := c.Param("ipAddress")
+
+	var isSSL bool
+	var errMessage string
+	var errCode int
+
+	filePath := getPathDomain(domain)
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		errCode++
+		errMessage = "Domain not founds"
+	}
+
+	if errCode == 0 {
+		content, err := ioutil.ReadFile(getPathDomain(domain))
+		if err != nil {
+			errCode++
+			errMessage = "Error Read File"
+			log.Fatal("Error when opening file: ", err)
+		}
+
+		strContent := string(content)
+		re := regexp.MustCompile(`(?m)proxy_pass\s+http://[^;]+`)
+		newContent := re.ReplaceAllString(strContent, "proxy_pass http://"+ip)
+		// Tulis kembali isi file
+		err = ioutil.WriteFile(getPathDomain(domain), []byte(newContent), 0644)
+		if err != nil {
+			errCode++
+			errMessage = "Error when writing file"
+		}
+	}
+
+	if errCode == 0 {
+		cmd := exec.Command("nginx", "-s", "reload")
+		err := cmd.Run()
+		if err != nil {
+			errCode++
+			errMessage = fmt.Sprintf("Failed run nginx command: %s", err)
+			log.Fatalf("Failed to run nginx command: %s", err)
+		}
+	}
+
+	if errCode == 0 {
+		isSSL = checkCertificate(domain)
+	}
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
 			Status:  true,
-			Message: "TODO : implement update domain",
+			Code:    errCode,
+			Message: errMessage,
+			Data: map[string]interface{}{
+				"ip":        ip,
+				"statusSSL": isSSL,
+			},
 		},
 	)
 }
 
 func DeleteDomain(c *gin.Context) {
-
 	domain := c.Param("domain")
 
 	errCode := 0
@@ -167,7 +225,8 @@ func GetDomainStatus(c *gin.Context) {
 	errMessage := ""
 
 	var ipDomain []string
-	// Menentukan file yang akan dihapus
+	var isSSL bool
+
 	filePath := getPathDomain(domain)
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
@@ -187,12 +246,20 @@ func GetDomainStatus(c *gin.Context) {
 
 	}
 
+	if errCode == 0 {
+		isSSL = checkCertificate(domain)
+	}
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
 			Status:  true,
+			Code:    errCode,
 			Message: errMessage,
-			Data:    ipDomain,
+			Data: map[string]interface{}{
+				"ip":        ipDomain,
+				"statusSSL": isSSL,
+			},
 		},
 	)
 }
@@ -211,6 +278,10 @@ func getPathDomain(name string) string {
 	return fmt.Sprintf(filePath+"%s.conf", name)
 }
 
+func getPathCertificateDomain(name string) string {
+	return fmt.Sprintf(filePathCertificate+"%s", name)
+}
+
 func getTemplateFile(name, ip string) string {
 	return fmt.Sprintf(fileTemplate, name, ip)
 }
@@ -226,4 +297,56 @@ func CreateDomain(name string, ip string) (*os.File, error) {
 		panic(err)
 	}
 	return file, err
+}
+
+func validateDomain(domain string) bool {
+	var validateDomain bool
+	validateDomain = true
+	_, err := net.LookupHost(domain)
+	if err != nil {
+		validateDomain = false
+	}
+
+	_, err = url.Parse("http://" + domain)
+	if err != nil {
+		validateDomain = false
+	}
+
+	return validateDomain
+}
+
+func checkCertificate(domain string) bool {
+	ssl := true
+	domainWithPort := domain + ":443"
+	conn, err := tls.Dial("tcp", domainWithPort, nil)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	defer conn.Close()
+
+	state := conn.ConnectionState()
+	certs := state.PeerCertificates
+	if len(certs) == 0 {
+		ssl = false
+	}
+	return ssl
+}
+
+// get IP pada file data/config.json
+func getIpDefault() string {
+	filename := "data/config.json"
+	_, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		createDataConfiguration()
+	}
+	var data dtf.Configuration
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal("Error when opening file: ", err)
+	}
+	err = json.Unmarshal(content, &data)
+	if err != nil {
+		log.Fatal("Error during Unmarshal(): ", err)
+	}
+	return data.DefaultIp
 }

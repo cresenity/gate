@@ -15,6 +15,7 @@ type Config struct {
 	Debug       bool
 	Version     string
 	ApiKey      string
+	IP          string
 }
 
 func LoadAppConfig() {
@@ -35,6 +36,7 @@ func LoadAppConfig() {
 	AppConfig.Environment = viper.GetString("ENVIRONMENT")
 	AppConfig.Debug = viper.GetBool("DEBUG")
 	AppConfig.ApiKey = viper.GetString("API_KEY")
+	AppConfig.IP = viper.GetString("IP")
 
 	log.Println("[INIT] configuration loaded")
 }
