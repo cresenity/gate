@@ -33,6 +33,7 @@ const (
 	
 		location / {
 			proxy_pass http://%s;
+			proxy_set_header Host $http_host;
 		}
 	
 		error_page   500 502 503 504  /50x.html;
