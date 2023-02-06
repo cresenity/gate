@@ -6,15 +6,8 @@ import (
 )
 
 const (
-	filePath string = "/etc/nginx/conf.d/"
-)
-
-func getPathDomain(name string) string {
-	return fmt.Sprintf(filePath+" %s", name)
-}
-
-func getTemplateFile(name, ip string) string {
-	return fmt.Sprintf(`server {
+	filePath     string = "/etc/nginx/conf.d/"
+	fileTemplate string = `server {
 		listen       80;
 		listen  [::]:80;
 		server_name  %s;
@@ -27,7 +20,15 @@ func getTemplateFile(name, ip string) string {
 		location = /50x.html {
 			root   /usr/share/nginx/html;
 		}
-	}`, name, ip)
+	}`
+)
+
+func getPathDomain(name string) string {
+	return fmt.Sprintf(filePath+" %s", name)
+}
+
+func getTemplateFile(name, ip string) string {
+	return fmt.Sprintf(fileTemplate, name, ip)
 }
 
 func CreateDomain(name string, ip string) (*os.File, error) {

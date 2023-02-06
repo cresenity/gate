@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net"
 	"os/exec"
 	"regexp"
+	"strings"
 
 	// "net"
 	"log"
@@ -23,7 +25,7 @@ import (
 const (
 	filePath            string = "/etc/nginx/conf.d/"
 	filePathCertificate        = "/etc/letsencrypt/live/"
-	// filePath     string = "/usr/local/etc/nginx/servers/"
+	// filePath            string = "/usr/local/etc/nginx/servers/"
 	fileTemplate string = `server {
 		listen       80;
 		listen  [::]:80;
@@ -265,11 +267,62 @@ func GetDomainStatus(c *gin.Context) {
 }
 
 func GetAllDomainStatus(c *gin.Context) {
+	var errCode int
+	var errMessage string
+	var dataDomain []map[string]interface{}
+	var domains []string
+
+	cmd := exec.Command("ls", filePath)
+
+	// Mengambil output perintah sebagai bytes.Buffer
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	// Menjalankan perintah
+	err := cmd.Run()
+	if err != nil {
+		errCode++
+		errMessage = fmt.Sprintf("Error : %s", err)
+	}
+
+	// Mengubah output perintah menjadi string
+	str := out.String()
+
+	// str := out.String()
+	domains = strings.Split(str, "\n")
+	countDomain := len(domains)
+
+	for _, v := range domains {
+		var ipDomain []string
+		name := strings.Replace(v, ".conf", "", -1)
+		if len(name) > 0 {
+			// isSSL := checkCertificate(name)
+			ips, _ := net.LookupHost(name)
+			for _, ip := range ips {
+				ipDomain = append(ipDomain, ip)
+			}
+			domain := map[string]interface{}{
+				"domain": name,
+				"ip":     ipDomain,
+				// "statusSSL": false,
+			}
+			dataDomain = append(dataDomain, domain)
+		}
+
+	}
+
+	data := map[string]interface{}{
+		"total": countDomain,
+		"items": dataDomain,
+	}
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
 			Status:  true,
-			Message: "TODO : implement get all domain status",
+			Code:    errCode,
+			Message: errMessage,
+			Data:    data,
 		},
 	)
 }
