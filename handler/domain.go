@@ -202,13 +202,32 @@ func DeleteDomain(c *gin.Context) {
 	// Menentukan file yang akan dihapus
 	filePath := getPathDomain(domain)
 
-	// Menjalankan perintah untuk menghapus file
-	err := os.Remove(filePath)
-	if err != nil {
-		// Menangkap error jika ada
+	// Check domain tersebut ada atau tidak
+	_, errPath := os.Stat(filePath)
+	if os.IsNotExist(errPath) {
 		errCode++
-		errMessage = fmt.Sprintf("Error: %s", err)
+		errMessage = "Domain not founds"
+	}
 
+	// Menjalankan perintah untuk menghapus file
+	if errCode == 0 {
+		err := os.Remove(filePath)
+		if err != nil {
+			// Menangkap error jika ada
+			errCode++
+			errMessage = fmt.Sprintf("Error: %s", err)
+
+		}
+	}
+
+	// Menjalankan Perintah untuk menhapus file ssl
+	if errCode == 0 {
+		folderPath := getPathCertificateDomain(domain)
+		err := os.RemoveAll(folderPath)
+		if err != nil {
+			errCode++
+			errMessage = "Error Delete Path Certificate"
+		}
 	}
 
 	c.JSON(
