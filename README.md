@@ -10,3 +10,10 @@
 		<img src="https://img.shields.io/docker/pulls/haristhohir/gate.svg?style=for-the-badge">
 	</a>
 </p>
+
+#### Status Check
+<p align="center">
+	
+[![Docker Image CI](https://github.com/cresenity/gate/actions/workflows/docker-image.yml/badge.svg)](https://github.com/cresenity/gate/actions/workflows/docker-image.yml)
+
+</p>
