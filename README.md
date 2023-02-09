@@ -16,4 +16,5 @@
 	
 [![Docker Image CI](https://github.com/cresenity/gate/actions/workflows/docker-image.yml/badge.svg)](https://github.com/cresenity/gate/actions/workflows/docker-image.yml)
 
+[![Go](https://github.com/cresenity/gate/actions/workflows/go.yml/badge.svg)](https://github.com/cresenity/gate/actions/workflows/go.yml)
 </p>
