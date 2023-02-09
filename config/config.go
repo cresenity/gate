@@ -16,6 +16,7 @@ type Config struct {
 	Version     string
 	ApiKey      string
 	IP          string
+	AdminEmail  string
 }
 
 func LoadAppConfig() {
@@ -37,6 +38,7 @@ func LoadAppConfig() {
 	AppConfig.Debug = viper.GetBool("DEBUG")
 	AppConfig.ApiKey = viper.GetString("API_KEY")
 	AppConfig.IP = viper.GetString("IP")
+	AppConfig.AdminEmail = viper.GetString("ADMIN_EMAIL")
 
 	log.Println("[INIT] configuration loaded")
 }
