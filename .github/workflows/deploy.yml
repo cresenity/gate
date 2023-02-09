@@ -12,7 +12,7 @@ jobs:
         with: 
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           name: id_rsa #optional
-          known_hosts: ${{ secrets.SSH_HOST }}
+          known_hosts: 163.47.10.166
           if_key_exists: fail
       - name: Check SSH Key
         run: cat ~/.ssh/id_rsa
