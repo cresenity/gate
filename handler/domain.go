@@ -269,7 +269,7 @@ func GetDomainStatus(c *gin.Context) {
 	if errCode == 0 {
 		ips, err := net.LookupHost(domain)
 		if err != nil {
-			fmt.Println("Error when looking up host:", err)
+			fmt.Println("Error when looking up host :", err)
 			return
 		}
 		for _, ip := range ips {
