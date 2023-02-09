@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetInfo(c *gin.Context) {
+unc GetInfo(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
