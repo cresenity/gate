@@ -103,7 +103,7 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain)
+		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
 		_, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println("Error Cerbot file:", err)
@@ -182,7 +182,7 @@ func UpdateDomain(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
-			Status:  true,
+			Status:  errCode == 0,
 			Code:    errCode,
 			Message: errMessage,
 			Data: map[string]interface{}{
@@ -227,6 +227,16 @@ func DeleteDomain(c *gin.Context) {
 		if err != nil {
 			errCode++
 			errMessage = "Error Delete Path Certificate"
+		}
+	}
+
+	if errCode == 0 {
+		cmd := exec.Command("nginx", "-s", "reload")
+		err := cmd.Run()
+		if err != nil {
+			errCode++
+			errMessage = fmt.Sprintf("Failed run nginx command: %s", err)
+			log.Fatalf("Failed to run nginx command: %s", err)
 		}
 	}
 
