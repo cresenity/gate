@@ -17,4 +17,4 @@ jobs:
       - name: Check SSH Key
         run: cat ~/.ssh/id_rsa
       - name: Deploy
-        run: ssh devops@gate.ittron.co.id "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
+        run: ssh -i ~/.ssh/id_rsa devops@163.47.10.166 "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
