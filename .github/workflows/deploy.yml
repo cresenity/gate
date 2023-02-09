@@ -12,9 +12,9 @@ jobs:
         with: 
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           name: id_rsa #optional
-          known_hosts: 163.47.10.166
+          known_hosts: ${{ secrets.SSH_KNOWN_HOST }}
           if_key_exists: fail
       - name: Check SSH Key
         run: cat ~/.ssh/id_rsa
       - name: Deploy
-        run: ssh -i ~/.ssh/id_rsa devops@163.47.10.166 "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
+        run: ssh -i ~/.ssh/id_rsa devops@gate.ittron.co.id "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
