@@ -285,7 +285,7 @@ func GetDomainStatus(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
-			Status:  true,
+			Status:  errCode == 0,
 			Code:    errCode,
 			Message: errMessage,
 			Data: map[string]interface{}{
