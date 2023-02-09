@@ -263,7 +263,7 @@ func GetDomainStatus(c *gin.Context) {
 	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		errCode++
-		errMessage = "Domain not founds"
+		errMessage = "Domain not found"
 	}
 
 	if errCode == 0 {
