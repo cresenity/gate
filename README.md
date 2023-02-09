@@ -1,4 +1,4 @@
-# Gate
+# Gate ![Docker Image CI](https://github.com/cresenity/gate/actions/workflows/docker-image.yml/badge.svg?branch=master) ![Go](https://github.com/cresenity/gate/actions/workflows/go.yml/badge.svg)
 
 <p align="center">
 	<img src="http://cresenity.com/application/crweb/default/media/img/favico-apple.png">
@@ -9,12 +9,4 @@
 	<a href="https://hub.docker.com/repository/docker/haristhohir/gate">
 		<img src="https://img.shields.io/docker/pulls/haristhohir/gate.svg?style=for-the-badge">
 	</a>
-</p>
-
-#### Status Check
-<p align="center">
-	
-[![Docker Image CI](https://github.com/cresenity/gate/actions/workflows/docker-image.yml/badge.svg)](https://github.com/cresenity/gate/actions/workflows/docker-image.yml)
-
-[![Go](https://github.com/cresenity/gate/actions/workflows/go.yml/badge.svg)](https://github.com/cresenity/gate/actions/workflows/go.yml)
 </p>
