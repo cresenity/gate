@@ -15,4 +15,4 @@ jobs:
           known_hosts: ${{ secrets.SSH_HOST }}
           if_key_exists: fail
       - name: Deploy
-        run: ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
+        run: ssh -i /home/runner/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
