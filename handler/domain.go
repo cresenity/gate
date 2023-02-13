@@ -72,32 +72,32 @@ func InstallSsl(c *gin.Context) {
 		}
 	}
 
-	if errCode == 0 {
-		targetDomain := nameDomain
-		desiredIP := config.AppConfig.IP
-		log.Println(" IP Config :", desiredIP)
+	// if errCode == 0 {
+	// 	targetDomain := nameDomain
+	// 	desiredIP := config.AppConfig.IP
+	// 	log.Println(" IP Config :", desiredIP)
 
-		if len(desiredIP) > 0 {
-			ips, err := net.LookupIP(targetDomain)
-			if err != nil {
-				errCode++
-				errMessage = "Error lookup ip"
-				log.Panicln("Error looking up IP for domain:", err)
-			}
+	// 	if len(desiredIP) > 0 {
+	// 		ips, err := net.LookupIP(targetDomain)
+	// 		if err != nil {
+	// 			errCode++
+	// 			errMessage = "Error lookup ip"
+	// 			log.Panicln("Error looking up IP for domain:", err)
+	// 		}
 
-			for _, ip := range ips {
-				log.Println("Error Cerbot IP:", ip.String())
-				if ip.String() == desiredIP {
-					isConnectIp = true
-				}
-			}
+	// 		for _, ip := range ips {
+	// 			log.Println("Error Cerbot IP:", ip.String())
+	// 			if ip.String() == desiredIP {
+	// 				isConnectIp = true
+	// 			}
+	// 		}
 
-			if !isConnectIp {
-				errCode++
-				errMessage = "ip can't connect in defualt ip :" + desiredIP
-			}
-		}
-	}
+	// 		if !isConnectIp {
+	// 			errCode++
+	// 			errMessage = "ip can't connect in defualt ip :" + desiredIP
+	// 		}
+	// 	}
+	// }
 
 	if errCode == 0 {
 		_, err := CreateDomain(nameDomain, ip)
