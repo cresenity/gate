@@ -67,6 +67,7 @@ func InstallSsl(c *gin.Context) {
 
 	var isSSL bool
 	var isConnectIp bool
+	var isWWWStatusSSL bool
 
 	//chcek domain ada atau tidak
 	if errCode == 0 {
@@ -114,7 +115,7 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
+		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
 		_, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println("Error Cerbot file:", err)
@@ -127,6 +128,10 @@ func InstallSsl(c *gin.Context) {
 		isSSL = checkCertificate(nameDomain)
 	}
 
+	if errCode == 0 {
+		isWWWStatusSSL = checkCertificate(getNameDomainWWW(nameDomain))
+	}
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
@@ -134,8 +139,9 @@ func InstallSsl(c *gin.Context) {
 			Code:    errCode,
 			Message: errMessage,
 			Data: map[string]interface{}{
-				"isConnectIp": isConnectIp,
-				"statusSSL":   isSSL,
+				"isConnectIp":  isConnectIp,
+				"statusSSL":    isSSL,
+				"wwwStatusSSL": isWWWStatusSSL,
 			},
 		},
 	)
@@ -269,6 +275,7 @@ func GetDomainStatus(c *gin.Context) {
 
 	var ipDomain []string
 	var isSSL bool
+	var isSSLWWW bool
 
 	filePath := getPathDomain(domain)
 	_, err := os.Stat(filePath)
@@ -293,6 +300,10 @@ func GetDomainStatus(c *gin.Context) {
 		isSSL = checkCertificate(domain)
 	}
 
+	if errCode == 0 {
+		isSSLWWW = checkCertificate(getNameDomainWWW(domain))
+	}
+
 	c.JSON(
 		http.StatusOK,
 		dtf.Response{
@@ -300,8 +311,9 @@ func GetDomainStatus(c *gin.Context) {
 			Code:    errCode,
 			Message: errMessage,
 			Data: map[string]interface{}{
-				"ip":        ipDomain,
-				"statusSSL": isSSL,
+				"ip":           ipDomain,
+				"statusSSL":    isSSL,
+				"statusSSLWWW": isSSLWWW,
 			},
 		},
 	)
@@ -370,6 +382,10 @@ func GetAllDomainStatus(c *gin.Context) {
 
 func getPathDomain(name string) string {
 	return fmt.Sprintf(filePath+"%s.conf", name)
+}
+
+func getNameDomainWWW(name string) string {
+	return fmt.Sprintf("www.%s", name)
 }
 
 func getPathCertificateDomain(name string) string {
