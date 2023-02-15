@@ -27,6 +27,11 @@ const (
 	filePathCertificate        = "/etc/letsencrypt/live/"
 	// filePath            string = "/usr/local/etc/nginx/servers/"
 	fileTemplate string = `server {
+		server_name www.%s;
+		return 301 $scheme://%s$request_uri;
+		
+	}
+	server {
 		listen       80;
 		listen  [::]:80;
 		server_name  %s;
@@ -372,7 +377,7 @@ func getPathCertificateDomain(name string) string {
 }
 
 func getTemplateFile(name, ip string) string {
-	return fmt.Sprintf(fileTemplate, name, ip)
+	return fmt.Sprintf(fileTemplate, name, name, name, ip)
 }
 
 func CreateDomain(name string, ip string) (*os.File, error) {
