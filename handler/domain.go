@@ -67,6 +67,7 @@ func InstallSsl(c *gin.Context) {
 
 	var isSSL bool
 	var isConnectIp bool
+	var isConnectIpWWW bool
 	var isWWWStatusSSL bool
 
 	//chcek domain ada atau tidak
@@ -130,11 +131,11 @@ func InstallSsl(c *gin.Context) {
 			for _, ip := range ips {
 				log.Println("Error Cerbot IP:", ip.String())
 				if ip.String() == desiredIP {
-					isConnectIp = true
+					isConnectIpWWW = true
 				}
 			}
 
-			if isConnectIp {
+			if isConnectIpWWW {
 				cmdWWW := exec.Command("certbot", "--nginx", "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
 				_, err := cmdWWW.CombinedOutput()
 				if err != nil {
