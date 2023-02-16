@@ -115,7 +115,39 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
+		targetDomainWWW := nameDomain
+		desiredIP := config.AppConfig.IP
+		log.Println(" IP Config :", desiredIP)
+
+		if len(desiredIP) > 0 {
+			ips, err := net.LookupIP(getNameDomainWWW(targetDomainWWW))
+			if err != nil {
+				errCode++
+				errMessage = "Error lookup ip"
+				log.Panicln("Error looking up IP for domain:", err)
+			}
+
+			for _, ip := range ips {
+				log.Println("Error Cerbot IP:", ip.String())
+				if ip.String() == desiredIP {
+					isConnectIp = true
+				}
+			}
+
+			if isConnectIp {
+				cmdWWW := exec.Command("certbot", "--nginx", "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
+				_, err := cmdWWW.CombinedOutput()
+				if err != nil {
+					log.Println("Error Cerbot file:", err)
+					errCode++
+					errMessage = fmt.Sprintf("ERROR CERBOT: %s\n", err)
+				}
+			}
+		}
+	}
+
+	if errCode == 0 {
+		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
 		_, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println("Error Cerbot file:", err)
