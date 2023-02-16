@@ -478,6 +478,7 @@ func checkCertificate(domain string) bool {
 	conn, err := tls.Dial("tcp", domainWithPort, nil)
 	if err != nil {
 		log.Println("Error: ", err)
+		return false
 	}
 	defer conn.Close()
 
