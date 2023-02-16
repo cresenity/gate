@@ -5,6 +5,12 @@ server {
 
     location / {
         proxy_pass ${DEFAULT_TARGET};
+        proxy_set_header Host $http_host;
+		proxy_set_header X-Forwarded-For $remote_addr;
+		proxy_set_header X-Forwarded-Host $host;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header X-Forwarded-Server $host;
+		proxy_set_header X-Forwarded-Port $server_port;
     }
 
     error_page   500 502 503 504  /50x.html;

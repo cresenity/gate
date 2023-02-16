@@ -115,15 +115,7 @@ func InstallSsl(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		cmdWWW := exec.Command("certbot", "--nginx", "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
-		_, errWWW := cmdWWW.CombinedOutput()
-		if errWWW != nil {
-			log.Println("Error Cerbot file:", errWWW)
-			errCode++
-			errMessage = fmt.Sprintf("ERROR CERBOT: %s\n", errWWW)
-		}
-
-		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
+		cmd := exec.Command("certbot", "--nginx", "-d", nameDomain, "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
 		_, err := cmd.CombinedOutput()
 		if err != nil {
 			log.Println("Error Cerbot file:", err)
