@@ -143,6 +143,7 @@ func InstallSsl(c *gin.Context) {
 					errCode++
 					errMessage = fmt.Sprintf("ERROR CERBOT: %s\n", err)
 				}
+				isWWWStatusSSL = checkCertificate(getNameDomainWWW(nameDomain))
 			}
 		}
 	}
@@ -159,10 +160,6 @@ func InstallSsl(c *gin.Context) {
 
 	if errCode == 0 {
 		isSSL = checkCertificate(nameDomain)
-	}
-
-	if errCode == 0 {
-		isWWWStatusSSL = checkCertificate(getNameDomainWWW(nameDomain))
 	}
 
 	c.JSON(
@@ -309,6 +306,7 @@ func GetDomainStatus(c *gin.Context) {
 	var ipDomain []string
 	var isSSL bool
 	var isSSLWWW bool
+	var isConnectIpWWW bool
 
 	filePath := getPathDomain(domain)
 	_, err := os.Stat(filePath)
@@ -330,11 +328,33 @@ func GetDomainStatus(c *gin.Context) {
 	}
 
 	if errCode == 0 {
-		isSSL = checkCertificate(domain)
+		targetDomainWWW := domain
+		desiredIP := config.AppConfig.IP
+		log.Println(" IP Config :", desiredIP)
+
+		if len(desiredIP) > 0 {
+			ips, err := net.LookupIP(getNameDomainWWW(targetDomainWWW))
+			if err != nil {
+				errCode++
+				errMessage = "Error lookup ip"
+				log.Panicln("Error looking up IP for domain:", err)
+			}
+
+			for _, ip := range ips {
+				log.Println("Error Cerbot IP:", ip.String())
+				if ip.String() == desiredIP {
+					isConnectIpWWW = true
+				}
+			}
+
+			if isConnectIpWWW {
+				isSSLWWW = checkCertificate(getNameDomainWWW(targetDomainWWW))
+			}
+		}
 	}
 
 	if errCode == 0 {
-		isSSLWWW = checkCertificate(getNameDomainWWW(domain))
+		isSSL = checkCertificate(domain)
 	}
 
 	c.JSON(
