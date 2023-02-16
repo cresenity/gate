@@ -122,29 +122,27 @@ func InstallSsl(c *gin.Context) {
 
 		if len(desiredIP) > 0 {
 			ips, err := net.LookupIP(getNameDomainWWW(targetDomainWWW))
-			if err != nil {
-				errCode++
-				errMessage = "Error lookup ip"
-				log.Panicln("Error looking up IP for domain:", err)
-			}
 
-			for _, ip := range ips {
-				log.Println("Error Cerbot IP:", ip.String())
-				if ip.String() == desiredIP {
-					isConnectIpWWW = true
+			if err == nil {
+				for _, ip := range ips {
+					log.Println("Error Cerbot IP:", ip.String())
+					if ip.String() == desiredIP {
+						isConnectIpWWW = true
+					}
+				}
+
+				if isConnectIpWWW {
+					cmdWWW := exec.Command("certbot", "--nginx", "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
+					_, err := cmdWWW.CombinedOutput()
+					if err != nil {
+						log.Println("Error Cerbot file:", err)
+						errCode++
+						errMessage = fmt.Sprintf("ERROR CERBOT: %s\n", err)
+					}
+					isWWWStatusSSL = checkCertificate(getNameDomainWWW(nameDomain))
 				}
 			}
 
-			if isConnectIpWWW {
-				cmdWWW := exec.Command("certbot", "--nginx", "-d", getNameDomainWWW(nameDomain), "--non-interactive", "--agree-tos", "-m", config.AppConfig.AdminEmail)
-				_, err := cmdWWW.CombinedOutput()
-				if err != nil {
-					log.Println("Error Cerbot file:", err)
-					errCode++
-					errMessage = fmt.Sprintf("ERROR CERBOT: %s\n", err)
-				}
-				isWWWStatusSSL = checkCertificate(getNameDomainWWW(nameDomain))
-			}
 		}
 	}
 
@@ -334,21 +332,17 @@ func GetDomainStatus(c *gin.Context) {
 
 		if len(desiredIP) > 0 {
 			ips, err := net.LookupIP(getNameDomainWWW(targetDomainWWW))
-			if err != nil {
-				errCode++
-				errMessage = "Error lookup ip"
-				log.Panicln("Error looking up IP for domain:", err)
-			}
-
-			for _, ip := range ips {
-				log.Println("Error Cerbot IP:", ip.String())
-				if ip.String() == desiredIP {
-					isConnectIpWWW = true
+			if err == nil {
+				for _, ip := range ips {
+					log.Println("Error Cerbot IP:", ip.String())
+					if ip.String() == desiredIP {
+						isConnectIpWWW = true
+					}
 				}
-			}
 
-			if isConnectIpWWW {
-				isSSLWWW = checkCertificate(getNameDomainWWW(targetDomainWWW))
+				if isConnectIpWWW {
+					isSSLWWW = checkCertificate(getNameDomainWWW(targetDomainWWW))
+				}
 			}
 		}
 	}
