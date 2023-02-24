@@ -101,7 +101,7 @@ func InstallSsl(c *gin.Context) {
 
 			if !isConnectIp {
 				errCode++
-				errMessage = "ip can't connect in defualt ip :" + desiredIP
+				errMessage = "ip can't connect in default ip :" + desiredIP
 			}
 		}
 	}
