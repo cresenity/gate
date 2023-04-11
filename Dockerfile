@@ -8,6 +8,7 @@ RUN go build -o main
 FROM nginx:alpine as production-stage
 
 COPY ./nginx/default.conf.template /etc/nginx/templates/
+COPY ./nginx/nginx.conf.template /etc/nginx/nginx.conf
 COPY --from=build-stage /app/main /app/
 COPY init.sh /usr/local/bin
 
