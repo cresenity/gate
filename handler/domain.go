@@ -25,6 +25,7 @@ import (
 const (
 	filePath            string = "/etc/nginx/conf.d/"
 	filePathCertificate        = "/etc/letsencrypt/live/"
+	filePathRenewal            = "/etc/letsencrypt/renewal/"
 	// filePath            string = "/usr/local/etc/nginx/servers/"
 	fileTemplate string = `server {
 		server_name www.%s;
@@ -265,13 +266,23 @@ func DeleteDomain(c *gin.Context) {
 		}
 	}
 
-	// Menjalankan Perintah untuk menhapus file ssl
+	// Menjalankan Perintah untuk menghapus file ssl
 	if errCode == 0 {
 		folderPath := getPathCertificateDomain(domain)
 		err := os.RemoveAll(folderPath)
 		if err != nil {
 			errCode++
 			errMessage = "Error Delete Path Certificate"
+		}
+	}
+
+	// Menjalankan Perintah untuk menghapus file ssl
+	if errCode == 0 {
+		folderPath := getPathRenewalDomain(domain)
+		err := os.RemoveAll(folderPath)
+		if err != nil {
+			errCode++
+			errMessage = "Error Delete Path Renewal"
 		}
 	}
 
@@ -437,6 +448,10 @@ func getNameDomainWWW(name string) string {
 
 func getPathCertificateDomain(name string) string {
 	return fmt.Sprintf(filePathCertificate+"%s", name)
+}
+
+func getPathRenewalDomain(name string) string {
+	return fmt.Sprintf(filePathRenewal+"%s", name)
 }
 
 func getTemplateFile(name, ip string) string {
