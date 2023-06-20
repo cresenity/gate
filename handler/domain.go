@@ -287,14 +287,14 @@ func DeleteDomain(c *gin.Context) {
 	// Menjalankan Perintah untuk menghapus file ssl
 	if errCode == 0 {
 		folderPath := getPathRenewalDomain(domain)
-		err := os.RemoveAll(folderPath)
+		err := os.Remove(folderPath)
 		if err != nil {
 			errCode++
 			errMessage = "Error Delete Path Renewal"
 		}
 		wwwFolderPath := getPathRenewalDomain("www." + domain)
 		if _, err := os.Stat(wwwFolderPath); err == nil {
-                        err := os.RemoveAll(wwwFolderPath)
+                        err := os.Remove(wwwFolderPath)
 			if err != nil {
 			        errCode++
 			        errMessage = "Error Delete Path WWW Renewal"
