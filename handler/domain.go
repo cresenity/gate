@@ -274,6 +274,14 @@ func DeleteDomain(c *gin.Context) {
 			errCode++
 			errMessage = "Error Delete Path Certificate"
 		}
+		wwwFolderPath := getPathCertificateDomain("www." + domain)
+		if _, err := os.Stat(wwwFolderPath); err == nil {
+                        err := os.RemoveAll(wwwFolderPath)
+			if err != nil {
+			        errCode++
+			        errMessage = "Error Delete Path WWW Certificate"
+			}
+                }
 	}
 
 	// Menjalankan Perintah untuk menghapus file ssl
@@ -284,6 +292,14 @@ func DeleteDomain(c *gin.Context) {
 			errCode++
 			errMessage = "Error Delete Path Renewal"
 		}
+		wwwFolderPath := getPathRenewalDomain("www." + domain)
+		if _, err := os.Stat(wwwFolderPath); err == nil {
+                        err := os.RemoveAll(wwwFolderPath)
+			if err != nil {
+			        errCode++
+			        errMessage = "Error Delete Path WWW Renewal"
+			}
+                }
 	}
 
 	if errCode == 0 {
