@@ -14,7 +14,7 @@ COPY init.sh /usr/local/bin
 
 RUN chmod +x /usr/local/bin/init.sh
 RUN apk add certbot-nginx
-RUN apk add jq
+RUN apk add openssl
 RUN echo "0 0 1 * * /usr/bin/certbot renew --quiet" >> /etc/crontabs/root
 
 ENTRYPOINT [ "/usr/local/bin/init.sh" ]
