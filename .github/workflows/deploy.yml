@@ -17,4 +17,4 @@ jobs:
           known_hosts: ${{ secrets.SSH_KNOWN_HOST }}
           if_key_exists: fail
       - name: Deploy
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd deployment && docker pull haristhohir/gate:latest && docker compose up -d"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd deployment && docker pull ghcr.io/cresenity/gate:latest && docker compose up -d"
