@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 
+	gincollector "github.com/cresenity/devcloud-collector-client-golang/gin"
 	"github.com/cresenity/gate/config"
 	dtf "github.com/cresenity/gate/datatransfer"
 	"github.com/gin-gonic/gin"
@@ -64,6 +65,7 @@ func InstallSsl(c *gin.Context) {
 	if len(ip) == 0 {
 		defaultIp, err := readDefaultIp()
 		if err != nil {
+			gincollector.Report(config.Collector, c, err)
 			c.JSON(http.StatusInternalServerError, dtf.Response{
 				Status:  false,
 				Message: "Error read default ip: " + err.Error(),
@@ -112,6 +114,7 @@ func InstallSsl(c *gin.Context) {
 				errCode++
 				errMessage = "Error lookup ip"
 				log.Println("Error looking up IP for domain:", err)
+				gincollector.Report(config.Collector, c, err)
 			}
 
 			for _, ip := range ips {
@@ -231,6 +234,7 @@ func UpdateDomain(c *gin.Context) {
 			errCode++
 			errMessage = "Error Read File"
 			log.Println("Error when opening file: ", err)
+			gincollector.Report(config.Collector, c, err)
 		} else {
 			strContent := string(content)
 			re := regexp.MustCompile(`(?m)proxy_pass\s+http://[^;]+`)
@@ -254,6 +258,7 @@ func UpdateDomain(c *gin.Context) {
 			errCode++
 			errMessage = fmt.Sprintf("Failed run nginx command: %s", err)
 			log.Println("Failed to run nginx command: ", err)
+			gincollector.Report(config.Collector, c, err)
 		}
 	}
 
@@ -348,6 +353,7 @@ func DeleteDomain(c *gin.Context) {
 			errCode++
 			errMessage = fmt.Sprintf("Failed run nginx command: %s", err)
 			log.Println("Failed to run nginx command: ", err)
+			gincollector.Report(config.Collector, c, err)
 		}
 	}
 

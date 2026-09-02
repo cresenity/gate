@@ -1,13 +1,21 @@
 package router
 
 import (
+	gincollector "github.com/cresenity/devcloud-collector-client-golang/gin"
+	"github.com/cresenity/gate/config"
 	"github.com/cresenity/gate/handler"
 	"github.com/cresenity/gate/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func InitializeRouter() (router *gin.Engine) {
-	router = gin.Default()
+	// gin.New() + Logger() + gincollector.Recovery() alih-alih gin.Default(): sama
+	// seperti gin.Recovery() bawaan (memulihkan panic lalu menjawab 500), tapi
+	// panic-nya juga dilaporkan ke devcloud - jaring pengaman untuk galat yang
+	// lolos jadi panic sungguhan, di luar tiga bekas log.Fatal/log.Panicln yang
+	// sudah diganti balasan JSON biasa di handler/domain.go.
+	router = gin.New()
+	router.Use(gin.Logger(), gincollector.Recovery(config.Collector))
 	// CORS harus berjalan sebelum Auth (dan sebelum grup api) supaya preflight OPTIONS
 	// tanpa Authorization tidak ditolak lebih dulu (BUG-07), dan supaya jalur yang tidak
 	// cocok rute apa pun tetap mendapat header CORS lewat rantai NoRoute bawaan gin.

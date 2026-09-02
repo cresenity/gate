@@ -13,6 +13,7 @@ import (
 
 func init() {
 	config.LoadAppConfig()
+	config.LoadCollector()
 
 	if !config.AppConfig.Debug {
 		gin.SetMode(gin.ReleaseMode)

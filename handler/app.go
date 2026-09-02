@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 
+	gincollector "github.com/cresenity/devcloud-collector-client-golang/gin"
 	"github.com/cresenity/gate/config"
 	dtf "github.com/cresenity/gate/datatransfer"
 	"github.com/gin-gonic/gin"
@@ -52,6 +53,9 @@ func GetInfo(c *gin.Context) {
 func GetConfiguration(c *gin.Context) {
 	data, err := readConfiguration()
 	if err != nil {
+		// BUG-15: baca/parse config.json rusak dulu log.Fatal di sini, mematikan
+		// daemon. Sekarang menjawab galat biasa - dan devcloud ikut tahu.
+		gincollector.Report(config.Collector, c, err)
 		c.JSON(
 			http.StatusInternalServerError,
 			dtf.Response{
@@ -94,6 +98,7 @@ func SetDefaultIpAddress(c *gin.Context) {
 	// BUG-14: kegagalan menulis config.json dulu dibuang dengan "_ =", sehingga
 	// handler tetap menjawab sukses walau tidak ada yang benar-benar tersimpan.
 	if err := writeConfiguration(data); err != nil {
+		gincollector.Report(config.Collector, c, err)
 		c.JSON(
 			http.StatusInternalServerError,
 			dtf.Response{
