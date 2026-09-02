@@ -8,13 +8,13 @@ import (
 
 func InitializeRouter() (router *gin.Engine) {
 	router = gin.Default()
-	router.GET("/")
+	// CORS harus berjalan sebelum Auth (dan sebelum grup api) supaya preflight OPTIONS
+	// tanpa Authorization tidak ditolak lebih dulu (BUG-07), dan supaya jalur yang tidak
+	// cocok rute apa pun tetap mendapat header CORS lewat rantai NoRoute bawaan gin.
+	router.Use(middleware.CORS)
 
 	apiRoute := router.Group("api")
-	apiRoute.Use(
-		middleware.Auth,
-		middleware.CORS,
-	)
+	apiRoute.Use(middleware.Auth)
 
 	apiRoute.GET("info", handler.GetInfo)
 	configRoute := apiRoute.Group("config")
