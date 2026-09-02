@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -10,13 +11,18 @@ import (
 )
 
 func Auth(c *gin.Context) {
-	token := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
-
-	if token == "" {
+	header := c.GetHeader("Authorization")
+	token := ""
+	if strings.HasPrefix(header, "Bearer ") {
+		token = strings.TrimPrefix(header, "Bearer ")
+	} else if header == "" {
 		token, _ = c.GetQuery("apiKey")
 	}
 
-	if token != config.AppConfig.ApiKey {
+	valid := config.AppConfig.ApiKey != "" &&
+		subtle.ConstantTimeCompare([]byte(token), []byte(config.AppConfig.ApiKey)) == 1
+
+	if !valid {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, dtf.Response{
 			Message: "Authentication failed, invalid API KEY",
 		})
