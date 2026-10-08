@@ -4,7 +4,9 @@ server {
     server_name  localhost;
 
     location / {
-        proxy_pass ${DEFAULT_TARGET};
+        # Variable, bukan literal, supaya resolver di nginx.conf berlaku di sini juga.
+        set $backend "${DEFAULT_TARGET}";
+        proxy_pass $backend;
         proxy_set_header Host $http_host;
 		proxy_set_header X-Forwarded-For $remote_addr;
 		proxy_set_header X-Forwarded-Host $host;

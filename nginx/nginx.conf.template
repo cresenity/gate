@@ -32,6 +32,10 @@ http {
     server_names_hash_max_size 2048;
     server_names_hash_bucket_size 128;
 
+    # Re-resolve hostname upstream berkala, bukan cache selamanya. RESOLVER_ADDRESS
+    # diisi init.sh, default 127.0.0.11 (DNS bawaan Docker) kalau tidak diset.
+    resolver ${RESOLVER_ADDRESS} valid=30s;
+
     #gzip  on;
 
     include /etc/nginx/conf.d/*.conf;

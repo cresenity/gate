@@ -65,8 +65,48 @@ func TestTemplateFileContainsDomainAndUpstream(t *testing.T) {
 	if !strings.Contains(out, "server_name  example.com") {
 		t.Errorf("server_name tidak ada pada template:\n%s", out)
 	}
-	if !strings.Contains(out, "proxy_pass http://10.0.0.1") {
+	if !strings.Contains(out, `set $backend "10.0.0.1"`) {
+		t.Errorf("set $backend tidak ada pada template:\n%s", out)
+	}
+	if !strings.Contains(out, "proxy_pass http://$backend") {
 		t.Errorf("proxy_pass tidak ada pada template:\n%s", out)
+	}
+}
+
+func TestTemplateFileAllowsHostnameUpstream(t *testing.T) {
+	out := getTemplateFile("example.com", "backend.internal")
+
+	if !strings.Contains(out, `set $backend "backend.internal"`) {
+		t.Errorf("hostname upstream semestinya dipertahankan, bukan diturunkan ke 127.0.0.1:\n%s", out)
+	}
+}
+
+func TestIsValidUpstreamTarget(t *testing.T) {
+	cases := []struct {
+		target string
+		want   bool
+	}{
+		{"10.0.0.1", true},
+		{"backend.internal", true},
+		{"example.com", true},
+		{"", false},
+		{"10.0.0.1;\n\tlisten 8080;", false},
+		{"backend.internal/../etc", false},
+	}
+	for _, c := range cases {
+		if got := isValidUpstreamTarget(c.target); got != c.want {
+			t.Errorf("isValidUpstreamTarget(%q) = %v, mau %v", c.target, got, c.want)
+		}
+	}
+}
+
+func TestTemplateFileMustRejectHostnameInjection(t *testing.T) {
+	jahat := "backend.internal;\n\t}\n\tserver {\n\t\tlisten 8080;\n\t\troot /etc;\n\t}\n\tserver {"
+
+	out := getTemplateFile("example.com", jahat)
+
+	if strings.Contains(out, "listen 8080") {
+		t.Fatalf("validasi hostname semestinya tetap menolak payload injeksi:\n%s", out)
 	}
 }
 

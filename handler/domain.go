@@ -38,7 +38,8 @@ const (
 		server_name  %s;
 
 		location / {
-			proxy_pass http://%s;
+			set $backend "%s";
+			proxy_pass http://$backend;
 			proxy_set_header Host $http_host;
 			proxy_set_header X-Forwarded-For $remote_addr;
 			proxy_set_header X-Forwarded-Host $host;
@@ -75,13 +76,11 @@ func InstallSsl(c *gin.Context) {
 		ip = defaultIp
 	}
 
-	// BUG-08/BUG-13: ip dipakai mentah menyusun direktif nginx (proxy_pass) di
-	// CreateDomain di bawah; tanpa validasi ini nilai apa pun yang lolos pencocokan
-	// rute bisa menyuntik direktif nginx tambahan ke berkas vhost.
-	if net.ParseIP(ip) == nil {
+	// BUG-08/BUG-13: cegah injeksi direktif nginx lewat ip. Lihat isValidUpstreamTarget.
+	if !isValidUpstreamTarget(ip) {
 		c.JSON(http.StatusBadRequest, dtf.Response{
 			Status:  false,
-			Message: "Invalid IP address",
+			Message: "Invalid upstream target (must be a valid IP address or hostname)",
 		})
 		return
 	}
@@ -209,12 +208,11 @@ func UpdateDomain(c *gin.Context) {
 	var errMessage string
 	var errCode int
 
-	// BUG-08/BUG-13: sama seperti InstallSsl, ip dipakai mentah menyusun proxy_pass
-	// lewat regex di bawah.
-	if net.ParseIP(ip) == nil {
+	// BUG-08/BUG-13: sama seperti InstallSsl.
+	if !isValidUpstreamTarget(ip) {
 		c.JSON(http.StatusBadRequest, dtf.Response{
 			Status:  false,
-			Message: "Invalid IP address",
+			Message: "Invalid upstream target (must be a valid IP address or hostname)",
 		})
 		return
 	}
@@ -237,12 +235,28 @@ func UpdateDomain(c *gin.Context) {
 			gincollector.Report(config.Collector, c, err)
 		} else {
 			strContent := string(content)
-			re := regexp.MustCompile(`(?m)proxy_pass\s+http://[^;]+`)
-			newContent := re.ReplaceAllString(strContent, "proxy_pass http://"+ip)
-			// Tulis kembali isi file
-			if err := ioutil.WriteFile(getPathDomain(domain), []byte(newContent), 0644); err != nil {
+			// Berkas lama pakai "proxy_pass http://<target>" langsung; migrasikan ke
+			// pola "set $backend" (lihat fileTemplate) sekalian saat di-update.
+			setBackendRe := regexp.MustCompile(`(?m)set \$backend\s+"[^"]*"`)
+			oldProxyPassRe := regexp.MustCompile(`(?m)proxy_pass\s+http://[^;]+`)
+
+			var newContent string
+			switch {
+			case setBackendRe.MatchString(strContent):
+				newContent = setBackendRe.ReplaceAllString(strContent, `set $backend "`+ip+`"`)
+			case oldProxyPassRe.MatchString(strContent):
+				newContent = oldProxyPassRe.ReplaceAllString(strContent, "set $backend \""+ip+"\";\n\t\t\tproxy_pass http://$backend")
+			default:
 				errCode++
-				errMessage = "Error when writing file"
+				errMessage = "Error: proxy_pass directive not found in domain file"
+			}
+
+			if errCode == 0 {
+				// Tulis kembali isi file
+				if err := ioutil.WriteFile(getPathDomain(domain), []byte(newContent), 0644); err != nil {
+					errCode++
+					errMessage = "Error when writing file"
+				}
 			}
 		}
 	}
@@ -513,12 +527,25 @@ func getPathRenewalDomain(name string) string {
 	return fmt.Sprintf(filePathRenewal+"%s", name)
 }
 
-// BUG-08: ip dulu masuk mentah ke template. net.ParseIP menolak nilai yang memuat
-// ";" atau baris baru (dipakai untuk menyuntik direktif nginx tambahan) sebelum ikut
-// dirangkai; jalur pemanggil (InstallSsl/UpdateDomain) sudah menolaknya lebih awal,
-// ini lapis pertahanan kedua langsung pada pembuatan template.
+// Nama host RFC 1123 saja -- cukup ketat untuk menolak payload injeksi (";", baris
+// baru, spasi, "/", "{", "}").
+var hostnameRegexp = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])?)*$`)
+
+// Target upstream boleh IP literal atau hostname (load balancer di baliknya bisa
+// ganti IP kapan saja); BUG-08 tetap ditolak.
+func isValidUpstreamTarget(target string) bool {
+	if net.ParseIP(target) != nil {
+		return true
+	}
+	if len(target) == 0 || len(target) > 253 {
+		return false
+	}
+	return hostnameRegexp.MatchString(target)
+}
+
+// BUG-08: lapis pertahanan kedua terhadap injeksi, setelah validasi di pemanggil.
 func getTemplateFile(name, ip string) string {
-	if net.ParseIP(ip) == nil {
+	if !isValidUpstreamTarget(ip) {
 		ip = "127.0.0.1"
 	}
 	return fmt.Sprintf(fileTemplate, name, name, name, ip)
