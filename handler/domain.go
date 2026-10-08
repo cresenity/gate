@@ -523,8 +523,12 @@ func getPathCertificateDomain(name string) string {
 	return fmt.Sprintf(filePathCertificate+"%s", name)
 }
 
+// Berkas renewal certbot asli selalu "<domain>.conf", bukan "<domain>" --
+// tanpa ".conf" ini os.Remove() di DeleteDomain selalu gagal (file memang
+// tidak pernah ada dengan nama itu), errCode jadi bukan 0, dan setiap langkah
+// setelahnya -- termasuk nginx -s reload -- tidak pernah tereksekusi.
 func getPathRenewalDomain(name string) string {
-	return fmt.Sprintf(filePathRenewal+"%s", name)
+	return fmt.Sprintf(filePathRenewal+"%s.conf", name)
 }
 
 // Nama host RFC 1123 saja -- cukup ketat untuk menolak payload injeksi (";", baris

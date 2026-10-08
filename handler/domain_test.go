@@ -53,8 +53,11 @@ func TestGetPathCertificateDomain(t *testing.T) {
 	}
 }
 
+// Berkas renewal certbot asli selalu "<domain>.conf" -- tanpa ini os.Remove()
+// di DeleteDomain selalu gagal dan errCode jadi tidak pernah 0, membuat
+// nginx -s reload di langkah berikutnya tidak pernah tereksekusi.
 func TestGetPathRenewalDomain(t *testing.T) {
-	if got := getPathRenewalDomain("example.com"); got != "/etc/letsencrypt/renewal/example.com" {
+	if got := getPathRenewalDomain("example.com"); got != "/etc/letsencrypt/renewal/example.com.conf" {
 		t.Errorf("getPathRenewalDomain = %q", got)
 	}
 }
